@@ -1,5 +1,8 @@
 import os
+import threading
 from datetime import datetime, timedelta, timezone
+from fastapi import FastAPI
+import uvicorn
 from fpdf import FPDF
 from geopy.distance import geodesic
 from supabase import create_client, Client
@@ -13,8 +16,22 @@ from telegram.ext import (
     filters,
 )
 
+# --- FASTAPI WEB SERVER FOR RENDER PORT BINDING ---
+app_web = FastAPI()
+
+
+@app_web.get("/")
+def home():
+  return {"status": "Bot is running live!"}
+
+
+def run_fastapi():
+  port = int(os.environ.get("PORT", 10000))
+  uvicorn.run(app_web, host="0.0.0.0", port=port)
+
+
 # --- CONFIGURATION ---
-BOT_TOKEN = "8828782817:AAENZzZ4MpFxVDvWB9AJwomAhaflUrqpQLM"
+BOT_TOKEN = "8742119027:AAHURXCQ9yC0cBZ4xIqBKkTIlrPMcKMC3dA"
 COORDINATOR_ID = "7609626589"
 
 # Supabase መረጃዎች
@@ -241,6 +258,10 @@ async def finalize_attendance(update, context, status):
 
 
 def main():
+  # FastAPI ሰርቨሩን በሌላ ሬድ (Thread) ማስጀመር
+  t = threading.Thread(target=run_fastapi, daemon=True)
+  t.start()
+
   app = (
       Application.builder()
       .token(BOT_TOKEN)
