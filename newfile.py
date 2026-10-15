@@ -16,7 +16,7 @@ from telegram.ext import (
     filters,
 )
 
-# --- FASTAPI WEB SERVER FOR RENDER PORT BINDING ---
+# --- FASTAPI WEB SERVER FOR PORT BINDING ---
 app_web = FastAPI()
 
 
@@ -31,7 +31,9 @@ def run_fastapi():
 
 
 # --- CONFIGURATION ---
-BOT_TOKEN = "8828782817:AAENZzZ4MpFxVDvWB9AJwomAhaflUrqpQLM"
+BOT_TOKEN = os.environ.get(
+    "BOT_TOKEN", "8828782817:AAENZzZ4MpFxVDvWB9AJwomAhaflUrqpQLM"
+)
 COORDINATOR_ID = "7609626589"
 
 # Supabase መረጃዎች
@@ -258,7 +260,6 @@ async def finalize_attendance(update, context, status):
 
 
 def main():
-  # FastAPI ሰርቨሩን በሌላ ሬድ (Thread) ማስጀመር
   t = threading.Thread(target=run_fastapi, daemon=True)
   t.start()
 
