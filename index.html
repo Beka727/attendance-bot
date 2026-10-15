@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>የተማሪዎች መገኘት ማረጋገጫ ሲስተም</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-slate-800 border border-slate-700 w-full max-w-md p-6 rounded-2xl shadow-xl">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-emerald-400">የመገኘት ማረጋገጫ</h1>
+            <p class="text-sm text-slate-400 mt-1">እባክዎ መረጃዎን በትክክል ይሙሉ</p>
+        </div>
+
+        <form id="attendanceForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">ሙሉ ስም (Full Name)</label>
+                <input type="text" id="fullName" required 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-emerald-500"
+                    placeholder="ሙሉ ስምዎን ያስገቡ">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">ተማሪ ID (Student ID)</label>
+                <input type="text" id="studentId" required 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-emerald-500 uppercase"
+                    placeholder="ለምሳሌ: EPU/123/21">
+            </div>
+
+            <button type="button" id="submitBtn" onclick="getLocationAndSubmit()"
+                class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
+                <span>📍 ሎኬሽኔን ልኬ ተመዝገብ</span>
+            </button>
+        </form>
+
+        <div id="statusMessage" class="mt-4 text-center text-sm hidden"></div>
+    </div>
+
+    <script>
+        async function getLocationAndSubmit() {
+            const fullName = document.getElementById('fullName').value.trim();
+            const studentId = document.getElementById('studentId').value.trim().toUpperCase();
+            const statusDiv = document.getElementById('statusMessage');
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (!fullName || !studentId) {
+                statusDiv.textContent = "⚠️ እባክዎ ስምዎን እና ID ቁጥርዎን ያስገቡ!";
+                statusDiv.className = "mt-4 text-center text-sm text-amber-400 block";
+                return;
+            }
+
+            if (!navigator.geolocation) {
+                statusDiv.textContent = "❌ አሳሽዎ ሎኬሽን (GPS) አይደግፍም።";
+                statusDiv.className = "mt-4 text-center text-sm text-rose-400 block";
+                return;
+            }
+
+            statusDiv.textContent = "🔄 ሎኬሽን እየወሰደ ነው፣ እባክዎ ይጠብቁ...";
+            statusDiv.className = "mt-4 text-center text-sm text-sky-400 block";
+            submitBtn.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+
+                try {
+                    // ወደ FastAPI Backend የሚላክ መረጃ
+                    const response = await fetch('/submit-attendance', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            full_name: fullName,
+                            student_id: studentId,
+                            latitude: latitude,
+                            longitude: longitude
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        statusDiv.textContent = "✅ " + result.message;
+                        statusDiv.className = "mt-4 text-center text-sm text-emerald-400 block";
+                        document.getElementById('attendanceForm').reset();
+                    } else {
+                        statusDiv.textContent = "❌ " + result.detail;
+                        statusDiv.className = "mt-4 text-center text-sm text-rose-400 block";
+                    }
+                } catch (error) {
+                    statusDiv.textContent = "❌ ከሰርቨር ጋር መገናኘት አልተቻለም።";
+                    statusDiv.className = "mt-4 text-center text-sm text-rose-400 block";
+                } finally {
+                    submitBtn.disabled = false;
+                }
+            }, (error) => {
+                statusDiv.textContent = "❌ ሎኬሽን ማግኘት አልተቻለም። እባክዎ ጂፒኤስ (GPS) ያብሩ።";
+                statusDiv.className = "mt-4 text-center text-sm text-rose-400 block";
+                submitBtn.disabled = false;
+            }, { enableHighAccuracy: true });
+        }
+    </script>
+</body>
+</html>
