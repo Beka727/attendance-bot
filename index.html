@@ -15,6 +15,11 @@
             <p class="text-sm text-slate-400 mt-1">እባክዎ መረጃዎን በትክክል ይሙሉ</p>
         </div>
 
+        <!-- አጭር የማስጠንቀቂያ መመሪያ ለተማሪዎች (Overlay/GPS Fix) -->
+        <div class="mb-5 bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl text-xs text-amber-300 leading-relaxed">
+            ⚠️ <b>ማሳሰቢያ:</b> ሎኬሽን ለመላክ ስትቸገር እንደ Messenger Chat Heads ያሉ ተንሳፋፊ መተግበሪያዎችን (Overlays) ለጊዜው ዝጋ። እንዲሁም የብራውዘርህን ሎኬሽን ፍቃድ <b>Allow</b> አድርገው።
+        </div>
+
         <form id="attendanceForm" class="space-y-4">
             <div>
                 <label class="block text-sm font-medium text-slate-300 mb-1">ሙሉ ስም (Full Name)</label>
@@ -93,13 +98,17 @@
                     statusDiv.textContent = "❌ ከሰርቨር ጋር መገናኘት አልተቻለም።";
                     statusDiv.className = "mt-4 text-center text-sm text-rose-400 block";
                 } finally {
-                    submitBtn.disabled = false;
+                    submitBtn.disabled = theOriginalState = submitBtn.disabled = false;
                 }
             }, (error) => {
-                statusDiv.textContent = "❌ ሎኬሽን ማግኘት አልተቻለም። እባክዎ ጂፒኤስ (GPS) ያብሩ።";
+                let errorMsg = "❌ ሎኬሽን ማግኘት አልተቻለም። እባክዎ ጂፒኤስ (GPS) ያብሩ።";
+                if (error.code === error.PERMISSION_DENIED) {
+                    errorMsg = "❌ የሎኬሽን ፍቃድ ተከልክሏል። እባክዎ ተንሳፋፊ መተግበሪያዎችን (Chat Heads) ዘግተው እንደገና ይሞክሩ።";
+                }
+                statusDiv.textContent = errorMsg;
                 statusDiv.className = "mt-4 text-center text-sm text-rose-400 block";
                 submitBtn.disabled = false;
-            }, { enableHighAccuracy: true });
+            }, { enableHighAccuracy: true, timeout: 10000 });
         }
     </script>
 </body>
